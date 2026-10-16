@@ -1,0 +1,18 @@
+import { validateCollection, type Collection, type CollectionInput, type CollectionListItem } from '../domain/collections.ts';
+import { newId, type DataContext, type SqlExecutor } from './sql.ts';
+type Row={id:string;kind:Collection['kind'];account:string;password:string;name:string;body:string;url:string;source:string;created_at:number;updated_at:number};
+const convert=(r:Row):Collection=>({id:r.id,kind:r.kind,account:r.account,password:r.password,name:r.name,body:r.body,url:r.url,source:r.source,createdAt:r.created_at,updatedAt:r.updated_at});
+export async function listCollections(db:SqlExecutor,{query='',limit=50,offset=0}:{query?:string;limit?:number;offset?:number}={}):Promise<CollectionListItem[]>{
+ if(typeof query!=='string'||query.length>100000||!Number.isSafeInteger(limit)||limit<1||limit>100||!Number.isSafeInteger(offset)||offset<0)throw new Error('收藏查询无效');
+ const text=query.trim();return(await db.all<Omit<Row,'password'>>('SELECT id,kind,name,body,url,source,account,created_at,updated_at FROM collections WHERE instr(name,?)>0 OR instr(account,?)>0 OR instr(body,?)>0 OR instr(url,?)>0 OR instr(source,?)>0 ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?',[text,text,text,text,text,limit,offset])).map(r=>({id:r.id,kind:r.kind,account:r.account,name:r.name,body:r.body,url:r.url,source:r.source,createdAt:r.created_at,updatedAt:r.updated_at}));
+}
+export async function getCollection(db:SqlExecutor,id:string):Promise<Collection|null>{const r=await db.first<Row>('SELECT * FROM collections WHERE id=?',[id]);return r?convert(r):null;}
+async function consumeDraft(tx:SqlExecutor,consume?:boolean){if(consume)await tx.run('DELETE FROM drafts WHERE key=?',['collection:editor']);}
+export async function createCollection(ctx:DataContext,input:CollectionInput,opts?:{consumeDraft?:boolean}):Promise<Collection>{const value=validateCollection(input);return ctx.db.transaction(async tx=>{const now=ctx.clock.now().getTime(),id=newId('collection');await tx.run('INSERT INTO collections(id,name,body,url,source,created_at,updated_at,kind,account,password) VALUES(?,?,?,?,?,?,?,?,?,?)',[id,value.name,value.body,value.url,value.source,now,now,value.kind,value.account,value.password]);await consumeDraft(tx,opts?.consumeDraft);return{id,...value,createdAt:now,updatedAt:now};});}
+export async function updateCollection(ctx:DataContext,id:string,input:CollectionInput,opts?:{consumeDraft?:boolean}):Promise<Collection>{const value=validateCollection(input);return ctx.db.transaction(async tx=>{const old=await getCollection(tx,id);if(!old)throw new Error('收藏已不存在');if(old.kind===value.kind&&old.account===value.account&&old.password===value.password&&old.name===value.name&&old.body===value.body&&old.url===value.url&&old.source===value.source){await consumeDraft(tx,opts?.consumeDraft);return old;}const now=Math.max(ctx.clock.now().getTime(),old.updatedAt+1);await tx.run('UPDATE collections SET name=?,body=?,url=?,source=?,kind=?,account=?,password=?,updated_at=? WHERE id=?',[value.name,value.body,value.url,value.source,value.kind,value.account,value.password,now,id]);await consumeDraft(tx,opts?.consumeDraft);return{...old,...value,updatedAt:now};});}
+export async function deleteCollection(ctx:DataContext,id:string):Promise<void>{await ctx.db.transaction(async tx=>{
+ await tx.run('DELETE FROM collections WHERE id=?',[id]);
+ const draft=await tx.first<{payload:string}>('SELECT payload FROM drafts WHERE key=?',['collection:editor']);
+ let matches=false;try{matches=!!draft&&JSON.parse(draft.payload)?.id===id;}catch{/* Unreadable draft ownership is unknown; preserve it. */}
+ if(matches)await tx.run('DELETE FROM drafts WHERE key=?',['collection:editor']);
+});}

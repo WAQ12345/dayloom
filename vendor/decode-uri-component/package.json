@@ -1,0 +1,11 @@
+{
+  "name": "decode-uri-component",
+  "version": "0.5.0",
+  "description": "Upstream 0.5.0 decoder with CommonJS export for Expo Router 57 query-string 7",
+  "main": "index.cjs",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=14.16"
+  }
+}

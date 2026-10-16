@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Dayloom",
+    "slug": "dayloom",
+    "version": "1.1.23",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF5EC",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "app.dayloom.mobile",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "versionCode": 26,
+      "backgroundColor": "#FAF5EC"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "dayloom",
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "选择用于饮食或物品记录的照片",
+          "cameraPermission": "拍摄用于饮食或物品记录的照片",
+          "microphonePermission": false
+        }
+      ],
+      "expo-notifications",
+      "expo-sharing",
+      "./plugins/with-local-signing.cjs",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAF5EC",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
+      "./plugins/with-font-scale.cjs"
+    ],
+    "backgroundColor": "#FAF5EC"
+  }
+}

@@ -1,0 +1,55 @@
+[
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/parse.js",
+    "before": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+    "after": "abd0112d30e46ce8dce3a0ed7cf0c00c8a6afd40bb0b0919b88f754333083ffe",
+    "search": "      stack.push(block);",
+    "replacement": "      if (stack.length >= 128) throw new SyntaxError('Brace nesting exceeds safe depth');\n      stack.push(block);"
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/compile.js",
+    "before": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+    "after": "820bc5564f3392a1a1fbd925b4cf7b8533981644578f01fbf36aa7480e836141",
+    "search": "const compile = (ast, options = {}) => {",
+    "replacement": "const compile = (ast, options = {}) => {\n  require('./chaoxi-depth-guard')(ast);"
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/expand.js",
+    "before": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+    "after": "117c17a6f532ee3e940e96ba5cb1dd7303345678820dd7f03b029849555be0d7",
+    "search": "const expand = (ast, options = {}) => {",
+    "replacement": "const expand = (ast, options = {}) => {\n  require('./chaoxi-depth-guard')(ast);"
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/stringify.js",
+    "before": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+    "after": "6ba6cd6743c36434c347038d576c8e5967aa14187598845fb5cc3906dd067e8b",
+    "search": "module.exports = (ast, options = {}) => {",
+    "replacement": "module.exports = (ast, options = {}) => {\n  require('./chaoxi-depth-guard')(ast);"
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/chaoxi-depth-guard.js",
+    "before": null,
+    "after": "11f33c18cd15469031492dce2a57c4bcb1d6fb7f36c980a6b1fa5910a8b12a72",
+    "content": "'use strict';\n// Local mitigation for GHSA-vfj7-8cjw-p6xm; only follow child edges, never parent/prev.\nmodule.exports = ast => {\n  const pending = [[ast, 0]], seen = new Set(); let count = 0;\n  while (pending.length) {\n    const [node, depth] = pending.pop();\n    if (!node || typeof node !== 'object') continue;\n    if (depth > 128 || ++count > 65536 || seen.has(node)) throw new SyntaxError('Brace AST exceeds safe bounds');\n    seen.add(node);\n    if (Array.isArray(node.nodes)) for (const child of node.nodes) pending.push([child, depth + 1]);\n  }\n};\n"
+  },
+  {
+    "package": "node-forge",
+    "version": "1.4.0",
+    "file": "lib/rsa.js",
+    "before": "fd4740238145ec26470eb3f06a627c72039538ce1307dbdce40521f94dfd0a50",
+    "after": "96c154db17c611f81eeb48aed2c064c80d87517df2fff24cf574fbd1ac050492",
+    "search": "obj.value.length !== 2) {",
+    "replacement": "obj.value.length !== 2 ||\n            obj.value[0].value.length !== ('parameters' in capture ? 2 : 1) ||\n            ('parameters' in capture && capture.parameters !== '')) {"
+  }
+]

@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {DEFAULT_IDEA_QUESTION,ideaQuestion,loadSelectedIdeas} from '../src/features/aiIdeaFlow.ts';
+const idea=(id:string)=>({id,body:`正文${id}`,tags:['标签'],pinned:false,archived:false,createdAt:1,updatedAt:1});
+test('idea default question stays visible to preview and user question is retained',()=>{assert.equal(ideaQuestion('  '),DEFAULT_IDEA_QUESTION);assert.equal(ideaQuestion(' 按主题整理 '),'按主题整理');});
+test('idea selection resolves only explicit selected IDs in one read, retaining order and full body',async()=>{let calls=0;const selected=['two','one'];const records=await loadSelectedIdeas(selected,async ids=>{calls++;assert.deepEqual(ids,selected);return ids.map(idea);});assert.equal(calls,1);assert.deepEqual(records,selected.map(idea));});
+test('empty, duplicate, missing or reordered selection is an explicit error with no silent truncation',async()=>{let calls=0;const read=async()=>{calls++;return [idea('one')];};await assert.rejects(loadSelectedIdeas([],read),/至少/);await assert.rejects(loadSelectedIdeas(['one','one'],read),/重复/);assert.equal(calls,0);await assert.rejects(loadSelectedIdeas(['one','two'],read),/重新选择/);await assert.rejects(loadSelectedIdeas(['two'],read),/重新选择/);const ids=Array.from({length:120},(_,i)=>String(i));assert.equal((await loadSelectedIdeas(ids,async all=>all.map(idea))).length,120);});
